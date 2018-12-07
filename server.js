@@ -9,7 +9,7 @@ const fs = require("fs");
 app.get('/bookAPI/bookList', (req, res) => {
     res.setHeader('Content-Type', 'text/json; charset=utf8');
     var params = url.parse(req.url, true).query
-    api.simpleSearch(params['title'], e=> {
+    api.simpleSearch(params['title'], params['pageCount'], e=> {
         var bookInfos = parser.bookInfoList(e)
         res.end(JSON.stringify(bookInfos))
     })
@@ -26,6 +26,22 @@ app.get('/bookAPI/douban', (req, res) => {
     res.setHeader('Content-Type', 'text/json; charset=utf8');
     var params = url.parse(req.url, true).query
     api.doubanBook(params['isbn'], e=> {
+        res.end(JSON.stringify(e))
+    })
+})
+app.get('/bookAPI/advSearch', (req, res) => {
+    res.setHeader('Content-Type', 'text/json; charset=utf8');
+    var params = url.parse(req.url, true).query
+    api.advSearch(params['code'], params['value'], params['pageCount'], params['sortMethod'], e=> {
+        if(!e){
+            res.end(null)
+            return
+        }
+        for (var i in e.content){
+            if (!e.content[i].callNo || !e.content[i].isbn){
+                e.content.splice(i,1)
+            }
+        }
         res.end(JSON.stringify(e))
     })
 })

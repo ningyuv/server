@@ -3,28 +3,28 @@ const qs = require('querystring')
 
 const optionMap = {
   fieldCodes: {
-    '任意词': 'any',
-    '题名': '02',
-    '责任者': '03',
-    '主题词': '04',
+    'any': 'any',
+    'title': '02',
+    'author': '03',
+    'subWord': '04',
     'ISBN': '05',
-    '分类号': '07',
-    '索书号': '08',
-    '出版社': '09',
-    '丛书名': '10'
+    'kindNum': '07',
+    'findCode': '08',
+    'pubNum': '09',
+    'bookName': '10'
   },
   sortFields: {
-    '相关度': 'relevance',
-    '入藏日期': 'cataDate',
-    '题名': 'title',
-    '责任者': 'author',
-    '索书号': 'callNo',
-    '出版社': 'publisher',
-    '出版日期': 'pubYear'
+    'relative': 'relevance',
+    'saveDate': 'cataDate',
+    'title': 'title',
+    'author': 'author',
+    'findCode': 'callNo',
+    'pubNum': 'publisher',
+    'pubDate': 'pubYear'
   },
   sortTypes: {
-    '升序排列': 'asc',
-    '降序排列': 'desc'
+    'asc': 'asc',
+    'desc': 'desc'
   }
 }
 var postDatas = {
@@ -43,10 +43,11 @@ var postDatas = {
   locale: "",
   first: true
 }
-function bookDetail(code, value, fn){
-  if(!value) return
+function advSearch(code, value, pageCount, sortMethod, fn){
   postDatas.searchWords[0].fieldList[0].fieldCode = optionMap.fieldCodes[code]
   postDatas.searchWords[0].fieldList[0].fieldValue = value
+  postDatas.sortField = sortMethod?sortMethod:'relevance'
+  postDatas.pageCount = pageCount?pageCount:1
   const baseURL = 'http://seat.stdu.edu.cn:8080/opac/ajax_search_adv.php';
   var options = {
     url: baseURL,
@@ -56,10 +57,11 @@ function bookDetail(code, value, fn){
     body: postDatas
   }
   request(options, (error, response, body)=> {
-    if(!error && response.statusCode==200){
+    if(!error && response.statusCode===200){
       fn(body);
     }
     else{
+      fn(null)
       console.log(error);
     }
   })
@@ -76,7 +78,7 @@ function doubanBook(isbn, fn){
     body: {}
   }
   request(options, (error, response, body)=> {
-    if(!error && response.statusCode==200){
+    if(!error && response.statusCode===200){
       fn(body);
     }
     else{
@@ -85,19 +87,22 @@ function doubanBook(isbn, fn){
     }
   })
 }
-function simpleSearch(name, fn){
+function simpleSearch(name, pageCount, fn){
   const baseURL = 'http://seat.stdu.edu.cn:8080/opac/openlink.php?'
   var data = {
-    'strText': name,
-    'historyCount': '1',
-    'strSearchType': 'title',
-    'doctype': 'ALL',
-    'match_flag': 'forward',
-    'displaypg': '10',
-    'sort': 'CATA_DATE',
-    'orderby': 'desc',
-    'showmode': 'list',
-    'dept': 'ALL'
+    "location": "ALL",
+    "title": name,
+    "doctype": "ALL",
+    "lang_code": "ALL",
+    "match_flag": "forward",
+    "displaypg": "20",
+    "showmode": "list",
+    "orderby": "DESC",
+    "sort": "CATA_DATE",
+    "onlylendable": "no",
+    "count": "242",
+    "with_ebook": "on",
+    "page": pageCount
   };
   var content = qs.stringify(data);
   var options = {
@@ -109,7 +114,7 @@ function simpleSearch(name, fn){
   }
   console.log(options)
   request(options, (error, response, body)=> {
-    if(!error && response.statusCode==200){
+    if(!error && response.statusCode===200){
       fn(body);
     }
     else{
@@ -131,7 +136,7 @@ function detailPage(marcRecNo, fn) {
     body: {}
   }
   request(options, (error, response, body)=> {
-    if(!error && response.statusCode==200){
+    if(!error && response.statusCode===200){
       fn(body);
     }
     else{
@@ -153,7 +158,7 @@ function lentInfo(marcRecNo, fn) {
     body: {}
   }
   request(options, (error, response, body)=> {
-    if(!error && response.statusCode==200){
+    if(!error && response.statusCode===200){
       fn(body);
     }
     else{
@@ -162,7 +167,7 @@ function lentInfo(marcRecNo, fn) {
   })
 }
 module.exports = {
-  bookDetail: bookDetail,
+  advSearch: advSearch,
   doubanBook: doubanBook,
   simpleSearch: simpleSearch,
   detailPage: detailPage,
